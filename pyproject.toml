@@ -1,0 +1,13 @@
+[project]
+name = "reachy2_monitoring"
+version = "0.1"
+dynamic = ["dependencies"]
+[tool.setuptools]
+package-dir = {"" = "src"}
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["*"]  # alternatively: `exclude = ["additional*"]`
+[tool.autoflake]
+exclude = "*kdl_parser_py*, *__init__.py*"
