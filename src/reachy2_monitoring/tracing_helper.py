@@ -76,6 +76,7 @@ class PollenSpan(contextlib.ExitStack):
         trace_name: Any,
         kind: trace.SpanKind = trace.SpanKind.INTERNAL,
         context: Any = None,
+        force_span: bool = False,
         with_pyroscope: bool = True,
         with_viztracer: bool = False,
         pyroscope_tags: Dict[str, str] = {},
@@ -88,6 +89,7 @@ class PollenSpan(contextlib.ExitStack):
         self.with_viztracer = with_viztracer
         self.with_pyroscope = with_pyroscope
         self.pyroscope_tags = pyroscope_tags
+        self.force_span = force_span
 
     @no_type_check
     def __enter__(self):
@@ -97,9 +99,11 @@ class PollenSpan(contextlib.ExitStack):
         stack = super().__enter__()
         self.span = self.enter_context(
             self.tracer.start_as_current_span(self.trace_name, kind=self.kind, context=self.context)
-            if otel_spans_enabled()
+            if otel_spans_enabled() or self.force_span
             else contextlib.nullcontext(DummySpan)
         )
+        if self.force_span:
+            print(f"force_span: {self.trace_name}")
 
         if pyroscope_enabled() and self.with_pyroscope:
             self.pyroscope = self.enter_context(pyroscope.tag_wrapper(self.pyroscope_tags))
@@ -167,30 +171,32 @@ def tracer(service_name: str, grpc_type: str = "", gc_trace: bool = True) -> tra
             case _:
                 ValueError("Sorry, no numbers below zero")
 
-        # resource = Resource(attributes={"service.name": "grpc_server"})
-        resource = Resource(attributes={"service.name": service_name})
-        provider = TracerProvider(resource=resource)
+    # resource = Resource(attributes={"service.name": "grpc_server"})
+    resource = Resource(attributes={"service.name": service_name})
+    provider = TracerProvider(resource=resource)
 
-        if pyroscope_enabled():
-            provider.add_span_processor(otel.PyroscopeSpanProcessor())
-        provider.add_span_processor(
-            BatchSpanProcessor(
-                OTLPSpanExporter(endpoint=f"http://{localhoststr}:4317"),
-                max_queue_size=150,
-                max_export_batch_size=5,
-            )
+    if pyroscope_enabled():
+        provider.add_span_processor(otel.PyroscopeSpanProcessor())
+    provider.add_span_processor(
+        BatchSpanProcessor(
+            OTLPSpanExporter(endpoint=f"http://{localhoststr}:4317"),
+            max_queue_size=150,
+            max_export_batch_size=5,
         )
+    )
 
-        trace.set_tracer_provider(provider)
-        # trace.get_tracer_provider().add_span_processor(
-        #     BatchSpanProcessor(OTLPSpanExporter(endpoint="http://localhost:4317"))
-        # )
-        _tracer = trace.get_tracer(service_name)
+    trace.set_tracer_provider(provider)
+    # trace.get_tracer_provider().add_span_processor(
+    #     BatchSpanProcessor(OTLPSpanExporter(endpoint="http://localhost:4317"))
+    # )
+    _tracer = trace.get_tracer(service_name)
+
+
+    if otel_spans_enabled():
         gc.callbacks.append(gc_callback)
-        return _tracer
 
     gc.callbacks.append(gc_callback)
-    return None
+    return _tracer
 
 
 def span_links(span: trace.Span, spans: List[trace.Link] = []) -> List[trace.Link]:
