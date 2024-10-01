@@ -104,9 +104,6 @@ class PollenSpan(contextlib.ExitStack):
             if otel_spans_enabled() or self.force_span
             else contextlib.nullcontext(DummySpan)
         )
-        if self.force_span:
-            print(f"force_span: {self.trace_name}")
-
         if pyroscope_enabled() and self.with_pyroscope:
             self.pyroscope = self.enter_context(
                 pyroscope.tag_wrapper(self.pyroscope_tags)
