@@ -37,9 +37,7 @@ def _load_runtime_context() -> _RuntimeContext:
     # environment variables
     default_context = "contextvars_context"
 
-    configured_context = environ.get(
-        OTEL_PYTHON_CONTEXT, default_context
-    )  # type: str
+    configured_context = environ.get(OTEL_PYTHON_CONTEXT, default_context)  # type: str
 
     try:
         return next(  # type: ignore
@@ -160,9 +158,7 @@ def detach(token: object) -> None:
 # Once the decision around how to suppress instrumentation is made in the
 # spec, this key should be moved accordingly.
 _SUPPRESS_INSTRUMENTATION_KEY = create_key("suppress_instrumentation")
-_SUPPRESS_HTTP_INSTRUMENTATION_KEY = create_key(
-    "suppress_http_instrumentation"
-)
+_SUPPRESS_HTTP_INSTRUMENTATION_KEY = create_key("suppress_http_instrumentation")
 
 __all__ = [
     "Context",

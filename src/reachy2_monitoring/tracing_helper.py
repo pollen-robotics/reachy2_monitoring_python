@@ -98,7 +98,9 @@ class PollenSpan(contextlib.ExitStack):
         """
         stack = super().__enter__()
         self.span = self.enter_context(
-            self.tracer.start_as_current_span(self.trace_name, kind=self.kind, context=self.context)
+            self.tracer.start_as_current_span(
+                self.trace_name, kind=self.kind, context=self.context
+            )
             if otel_spans_enabled() or self.force_span
             else contextlib.nullcontext(DummySpan)
         )
@@ -106,7 +108,9 @@ class PollenSpan(contextlib.ExitStack):
             print(f"force_span: {self.trace_name}")
 
         if pyroscope_enabled() and self.with_pyroscope:
-            self.pyroscope = self.enter_context(pyroscope.tag_wrapper(self.pyroscope_tags))
+            self.pyroscope = self.enter_context(
+                pyroscope.tag_wrapper(self.pyroscope_tags)
+            )
         if viztracer_enabled() and self.with_viztracer:
             ctx = self.span.get_span_context()
             self.viztracer = VizTracer(
@@ -155,7 +159,9 @@ def gc_callback(phase, info):  # type: ignore
 #####################################################################
 
 
-def tracer(service_name: str, grpc_type: str = "", gc_trace: bool = True) -> trace.Tracer | None:
+def tracer(
+    service_name: str, grpc_type: str = "", gc_trace: bool = True
+) -> trace.Tracer | None:
     global _tracer, _service_name
     _service_name = service_name
 
@@ -190,7 +196,6 @@ def tracer(service_name: str, grpc_type: str = "", gc_trace: bool = True) -> tra
     #     BatchSpanProcessor(OTLPSpanExporter(endpoint="http://localhost:4317"))
     # )
     _tracer = trace.get_tracer(service_name)
-
 
     if otel_spans_enabled():
         gc.callbacks.append(gc_callback)
@@ -249,11 +254,21 @@ def real_travel_span(
         pass
 
 
-def dummy_travel_span(name: str, start_time: int, tracer: None, context: Any = None,
-                      force_span: bool = False,
-                      ) -> None:
+def dummy_travel_span(
+    name: str,
+    start_time: int,
+    tracer: None,
+    context: Any = None,
+    force_span: bool = False,
+) -> None:
     if force_span:
-        real_travel_span(name=name, start_time=start_time, tracer=tracer, context=context, force_span=force_span)
+        real_travel_span(
+            name=name,
+            start_time=start_time,
+            tracer=tracer,
+            context=context,
+            force_span=force_span,
+        )
 
 
 TRACEPARENT_STR = "traceparent"
