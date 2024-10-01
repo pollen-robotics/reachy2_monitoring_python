@@ -238,6 +238,7 @@ def real_travel_span(
     start_time: int,
     tracer: trace.Tracer,
     context: trace.SpanContext | None = None,
+    force_span: bool = False,
 ) -> None:
     """
     Creates a span with a provided start_time.
@@ -248,8 +249,11 @@ def real_travel_span(
         pass
 
 
-def dummy_travel_span(name: str, start_time: int, tracer: None, context: Any = None) -> None:
-    pass
+def dummy_travel_span(name: str, start_time: int, tracer: None, context: Any = None,
+                      force_span: bool = False,
+                      ) -> None:
+    if force_span:
+        real_travel_span(name=name, start_time=start_time, tracer=tracer, context=context, force_span=force_span)
 
 
 TRACEPARENT_STR = "traceparent"
